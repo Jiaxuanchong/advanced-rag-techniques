@@ -1,93 +1,54 @@
 # Advanced RAG Techniques
 
-## Introduction
-This repository explores advanced retrieval-augmented generation (RAG) techniques for building intelligent document processing pipelines. It demonstrates how to combine large language models with custom document retrieval to generate contextually relevant answers from PDF sources.
+## Project Overview
+This repository contains example code and utilities for building Retrieval-Augmented Generation (RAG) pipelines focused on document-heavy workflows (PDFs, text files, etc.). It demonstrates parsing documents, expanding user queries to improve retrieval, and using a language model to generate context-aware answers grounded in retrieved content.
 
-Key features:
-- PDF document parsing and extraction
-- Integration with OpenAI's API for intelligent question-answering
-- Query expansion techniques for improved retrieval
-- Utility functions for text processing and formatting
+## Goals
+- Provide clear, runnable examples of RAG components.
+- Show practical query expansion techniques to improve retrieval recall.
+- Offer utility functions for text processing and simple I/O around PDFs.
 
-Whether you're building a document Q&A system, knowledge base assistant, or experimenting with prompt engineering, this repo provides practical examples to get you started.
+## Key Features
+- PDF parsing and text extraction using `pypdf`.
+- Query expansion helpers to broaden retrieval scope.
+- Integration examples for sending context + queries to an LLM (OpenAI).
+- Small utilities for formatting and presentation in `helper_utils.py`.
 
-## What are Advanced RAG Techniques?
-
-Retrieval-Augmented Generation (RAG) is a powerful approach that combines information retrieval with generative AI models to produce contextually relevant and accurate responses. Instead of relying solely on the model's pre-trained knowledge, RAG techniques retrieve external information (e.g., from documents, databases, or APIs) to enhance the quality of generated answers.
-
-### Key Concepts in Advanced RAG Techniques:
-1. **Document Retrieval**:
-   - Extract relevant information from external sources, such as PDFs, databases, or web pages, to provide context for the AI model.
-   - In this repository, the `PdfReader` library is used to parse and extract text from PDF documents.
-
-2. **Query Expansion**:
-   - Enhance user queries by adding related terms or rephrasing them to improve the retrieval of relevant information.
-   - Query expansion ensures that the AI model has access to the most relevant context for generating accurate responses.
-
-3. **Contextual Generation**:
-   - Use the retrieved information as input to a generative AI model (e.g., OpenAI's GPT) to produce responses that are grounded in the provided context.
-   - This approach reduces hallucinations and improves the factual accuracy of the generated content.
-
-4. **Text Preprocessing**:
-   - Preprocess the retrieved text to ensure it is clean, concise, and formatted for optimal input into the AI model.
-   - The `helper_utils` module in this repository provides functions like `word_wrap` to format text for better readability.
-
-### Benefits of Advanced RAG Techniques:
-- Improved accuracy and relevance of AI-generated responses.
-- Ability to handle domain-specific queries by leveraging external knowledge sources.
-- Enhanced user experience through more precise and context-aware answers.
-
-## How It Works
-
-### Code Logic Overview
-The main script, `expansion_answer.py`, demonstrates how to process PDF documents and use OpenAI's API for generating intelligent responses. Below is a breakdown of the key components:
-
-1. **Environment Setup**:
-   - The script uses the `dotenv` library to load environment variables from a `.env` file.
-   - The `OPENAI_API_KEY` is retrieved from the environment to authenticate requests to the OpenAI API.
-
-   ```python
-   from dotenv import load_dotenv
-   import os
-
-   load_dotenv()
-   openai_key = os.getenv("OPENAI_API_KEY")
-   ```
-
-2. **PDF Parsing**:
-   - The `PdfReader` from the `pypdf` library is used to read and extract text from PDF files.
-   - This allows the script to process documents and use their content for generating answers.
-
-   ```python
-   from pypdf import PdfReader
-   # Example usage:
-   # reader = PdfReader("example.pdf")
-   # text = " ".join([page.extract_text() for page in reader.pages])
-   ```
-
-3. **Text Formatting**:
-   - The `word_wrap` function from `helper_utils` is used to format the extracted text or generated responses for better readability.
-
-   ```python
-   from helper_utils import word_wrap
-   # Example usage:
-   # formatted_text = word_wrap(raw_text, width=80)
-   ```
-
-4. **OpenAI API Integration**:
-   - The script uses the `OpenAI` library to interact with OpenAI's API.
-   - Queries are sent to the API, and responses are generated based on the extracted PDF content and user input.
+## Repository Layout
+- `expansion_queries.py`: scripts and helpers for generating expanded queries.
+- `expansion_answer.py`: example end-to-end flow: load docs, retrieve context, call the LLM, and format output.
+- `helper_utils.py`: small utility functions (e.g., word wrapping, simple cleanup).
+- `data/`: place sample PDFs or other documents used for testing.
 
 
-### Workflow
-1. Load the `.env` file to retrieve the OpenAI API key.
-2. Use `PdfReader` to extract text from the PDF file.
-3. Format the extracted text using `word_wrap` for better readability.
-4. Send the processed text and user query to the OpenAI API to generate a response.
-5. Output the response in a user-friendly format.
+## How It Works (high level) 
 
-## Contributing
-- Open issues or PRs for improvements.
+1. Load environment variables and initialize OpenAI client.
+2. Read and extract text from PDF(s) in `data/` using `pypdf`.
+3. Filter and clean extracted text.
+4. Split text into smaller chunks using both character-based and token-based splitters from LangChain.
+5. Generate embeddings for each chunk using SentenceTransformer.
+6. Store chunks and embeddings in a ChromaDB collection.
+7. Query the collection for relevant chunks using a user question.
 
-## License
-- Add a license file as needed (e.g., MIT).
+### expansion_answer.py
+8. Use OpenAI to generate multiple related queries (query expansion) for the original question.
+9. Query ChromaDB with both the original and expanded queries to retrieve relevant documents.
+10. Deduplicate retrieved documents and concatenate them for context.
+11. Use OpenAI to generate a final answer based only on the retrieved context.
+12. Print the final answer and context for review.
+
+### expansion_queries.py 
+8. Use OpenAI to generate multiple related queries (query expansion) for the original question.
+9. Query ChromaDB with both the original and expanded queries to retrieve relevant documents.
+10. Deduplicate retrieved documents and concatenate them for context.
+11. Use OpenAI to generate a final answer based only on the retrieved context.
+12. Print the final answer and context for review.
+
+
+## Notes & Tips
+- Keep documents reasonably sized or chunk them before embedding/retrieval to avoid truncation.
+- Query expansion can improve recall but may increase retrieved noise — tune according to your data.
+- This repo uses simple, illustrative examples rather than production-grade retrieval stacks. For production, consider vector databases (e.g., FAISS, Weaviate) and batching.
+
+
